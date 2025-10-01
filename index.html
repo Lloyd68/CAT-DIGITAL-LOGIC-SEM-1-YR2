@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Number System Converter — PWA</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#22c1c3">
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #0f1724;
+      color: #e6eef6;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 { color: #22c1c3; }
+    input, select, button {
+      margin: 5px;
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      background: #22c1c3;
+      color: #042f2f;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      background: #0b1220;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Debug heading to confirm page is loading -->
+  <h1 style="color:white">✅ Page Loaded (Debug)</h1>
+
+  <h1>Number System Converter (PWA)</h1>
+  <p>Convert between Binary, Octal, Decimal & Hexadecimal</p>
+
+  <label>
+    Input Value:
+    <input id="inputValue" placeholder="e.g. 1010">
+  </label><br>
+
+  <label>
+    From:
+    <select id="fromBase">
+      <option value="2">Binary (2)</option>
+      <option value="8">Octal (8)</option>
+      <option value="10" selected>Decimal (10)</option>
+      <option value="16">Hexadecimal (16)</option>
+    </select>
+  </label>
+
+  <label>
+    To:
+    <select id="toBase">
+      <option value="2">Binary (2)</option>
+      <option value="8">Octal (8)</option>
+      <option value="10">Decimal (10)</option>
+      <option value="16" selected>Hexadecimal (16)</option>
+    </select>
+  </label>
+
+  <button onclick="doConvert()">Convert</button>
+
+  <div class="result">
+    <div>Binary: <span id="resBin">—</span></div>
+    <div>Octal: <span id="resOct">—</span></div>
+    <div>Decimal: <span id="resDec">—</span></div>
+    <div>Hexadecimal: <span id="resHex">—</span></div>
+  </div>
+
+  <script>
+    function parseInput(value, base) {
+      let v = value.trim();
+      if (v === "") throw new Error("Empty input");
+      let isNeg = v.startsWith("-");
+      if (isNeg) v = v.slice(1);
+
+      const patterns = {
+        2: /^[01]+$/,
+        8: /^[0-7]+$/,
+        16: /^[0-9a-fA-F]+$/   // ✅ fixed (removed stray /8)
+      };
+
+      if (base == 10) {
+        if (!/^\d+$/.test(v)) throw new Error("Invalid decimal");
+        return BigInt(value);
+      }
+
+      if (!patterns[base].test(v))
+        throw new Error("Invalid input for base " + base);
+
+      let dec = BigInt(parseInt(v, base));
+      return isNeg ? -dec : dec;
+    }
+
+    function toBaseString(n, base) {
+      let neg = n < 0n;
+      let val = neg ? -n : n;
+      let out = val.toString(base).toUpperCase();
+      return (neg ? "-" : "") + out;
+    }
+
+    function convertAll(input, fromBase) {
+      const dec = parseInput(input, fromBase);
+      return {
+        bin: toBaseString(dec, 2),
+        oct: toBaseString(dec, 8),
+        dec: toBaseString(dec, 10),
+        hex: toBaseString(dec, 16)
+      };
+    }
+
+    function doConvert() {
+      try {
+        let input = document.getElementById("inputValue").value;
+        let fromBase = parseInt(document.getElementById("fromBase").value);
+        let obj = convertAll(input, fromBase);
+        document.getElementById("resBin").textContent = obj.bin;
+        document.getElementById("resOct").textContent = obj.oct;
+        document.getElementById("resDec").textContent = obj.dec;
+        document.getElementById("resHex").textContent = obj.hex;
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("service-worker.js")
+        .then(() => console.log("SW registered"))
+        .catch(err => console.error("SW failed:", err));
+    }
+  </script>
+</body>
+</html>
